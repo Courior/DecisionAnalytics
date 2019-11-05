@@ -1,0 +1,69 @@
+Prdicates:
+	university
+	nationality
+	subject
+	gender
+	name
+	first letter
+Objects
+	Student #1, Student #2,Student #3, Student #4
+	
+
+Attributes
+	university = ["london", "cambridge", "oxford", "edinburgh"]
+	nationality = ["austrailia", "south africa", "canada", "usa"]
+	subject = ["architecture", "medicine", "history", "law"]
+	gender = ["boy", "girl"]
+	name = ["Carol", "Elisa", "Oliver", "Lucas"
+
+Carol, Elisa, Oliver and Lucas are going to university
+
+∀x: (university(x,london) V  university(x,cambridge) V  university(x,oxford) V  university(x,edinburgh))
+	∧(name(x,Carol) V  name(x,Elisa) V name(x,Oliver) V name(x,Lucas))
+	
+One of them is going to London.
+∀x ∀y ∀z ∀a: x!=y, x!=z, x!=a, y!=z , y!=a , z!=a:
+	university(x,london) => !university(y,london) ∧ !university(z,london) ∧ !university(a,london)
+	
+Exactly one boy and one girl chose a university in a city with the same initial of their names.
+∀x ∀y: x!=y: 
+	gender(x, boy) ∧ gender(y,boy)∧ name(x,Oliver)∧ university(x,oxford)∧ name(y,Lucus) =>
+	!university(y, London)
+	gender(x, boy) ∧ gender(y,boy)∧ name(x,Lucus)∧ university(x,London)∧ name(y,Oliver) =>
+	!university(y, oxford)
+	gender(x, girl) ∧ gender(y,girl)∧ name(x,Elisa)∧ university(x,edinburgh)∧ name(y,Carol) =>
+	!university(y, cambridge)
+	gender(x, girl) ∧ gender(y,girl)∧ name(x,Carol)∧ university(x,cambridge)∧ name(y,Elisa) =>
+	!university(y, edinburgh)
+	
+A boy is from Australia, the other studies Architecture.
+∀x ∀y: x!=y: 
+	gender(x, boy) ∧ gender(y,boy)∧ nationality(x,austrailia) =>
+	subject(y,architecture)
+A girl goes to Cambridge, the other studies Medicine.
+∀x ∀y: x!=y: 
+	gender(x, girl) ∧ gender(y,girl)∧ university(x,cambridge) =>
+	subject(y,medicine)
+	
+Oliver studies Law or is from USA. He is not from South Africa.
+∀x:
+		name(x,Oliver) => (!subject(x, medicine) ∧  nationality(x, USA)) V (subject(x, medicine) ∧  !nationality(x, USA))
+		name(x,Oliver) => !nationality(x, South Africa)
+The student from Canada is either a historian or will go to Oxford.
+∀x:
+		nationality(x,Canada) => (!subject(x, historian) ∧  university(x, Oxford)) V (subject(x, historian) ∧  !nationality(x, Oxford))
+The student from South Africa is going to Edinburgh or will study Law.
+∀x:
+		nationality(x,South Africa) => (!subject(x, law) ∧  university(x, Edinburgh)) V (subject(x, law) ∧  !nationality(x, Edinburgh))
+
+Implicit Constraints:
+	All students have 1 nationality
+	All students have 1 gender
+	All students have 1 name
+	All students have 1 subject
+	All students have 1 university
+	The student with the name Carol has a gender of Girl
+	The student with the name Elisa has a gender of Girl
+	The student with the name Oliver has a gender of Boy
+	The student with the name Lucus has a gender of Boy
+
