@@ -38,8 +38,7 @@ Exactly one boy and one girl chose a university in a city with the same initial 
 	
 A boy is from Australia, the other studies Architecture.
 ∀x ∀y: x!=y: 
-	gender(x, boy) ∧ gender(y,boy)∧ nationality(x,austrailia) =>
-	subject(y,architecture)
+	gender(x, boy) ∧ gender(y,boy) => (!nationality(x,austrailia) ∧ subject(y,architecture))V(nationality(x,austrailia) ∧ !subject(y,architecture))
 A girl goes to Cambridge, the other studies Medicine.
 ∀x ∀y: x!=y: 
 	gender(x, girl) ∧ gender(y,girl)∧ university(x,cambridge) =>

@@ -122,10 +122,16 @@ def main():
                                  student_subject[students[j]][subjects[k]].Not()])
                 model.AddBoolOr([student_name[students[i]][names[k]].Not(),
                                  student_name[students[j]][names[k]].Not()])
-            for k in range(2):
-                model.AddBoolOr([student_gender[students[i]][genders[k]].Not(),
-                                 student_gender[students[j]][genders[k]].Not()])
+    #TODO: NAme implies gender
+
     for student in students:
+       # model.AddBoolAnd([student_name[student]["Carol"], student_gender[student]["girl"]])
+       # model.AddBoolAnd([student_name[student]["Elisa"], student_gender[student]["girl"]])
+        model.AddBoolOr([student_name[student]["Carol"], student_name[student]["Elisa"]]).OnlyEnforceIf(student_gender[student]["girl"])
+        #model.AddBoolAnd([student_name[student]["Oliver"], student_gender[student]["boy"]])
+        #model.AddBoolAnd([student_name[student]["Lucas"], student_gender[student]["boy"]])
+        model.AddBoolOr([student_name[student]["Oliver"], student_name[student]["Lucas"]]).OnlyEnforceIf(student_gender[student]["boy"])
+
         # at least one property per student
         variables = []
         for university in universities:
@@ -176,77 +182,137 @@ def main():
 #One of them is going to London.
 #∀x ∀y ∀z ∀a: x!=y, x!=z, x!=a, y!=z , y!=a , z!=a:
 	#university(x,london) => !university(y,london) ∧ !university(z,london) ∧ !university(a,london)
-    other_students= list(students)
-    other_students.remove(student)
-    model.AddBoolAnd([student_university[other_students[0]]["london"].Not(),
-                      student_university[other_students[1]]["london"].Not(),
-                      student_university[other_students[2]]["london"].Not(),
-                      ]).OnlyEnforceIf(student_university[student]["london"])
-#Exactly one boy and one girl chose a university in a city with the same initial of their names.
-#Exactly one boy and one girl chose a university in a city with the same initial of their names.
-#∀x ∀y: x!=y:
-#	gender(x, boy) ∧ gender(y,boy)∧ name(x,Oliver)∧ university(x,oxford)∧ name(y,Lucus) =>
-#	!university(y, London)
-#	gender(x, boy) ∧ gender(y,boy)∧ name(x,Lucus)∧ university(x,London)∧ name(y,Oliver) =>
-#	!university(y, oxford)
-#	gender(x, girl) ∧ gender(y,girl)∧ name(x,Elisa)∧ university(x,edinburgh)∧ name(y,Carol) =>
-#	!university(y, cambridge)
-#	gender(x, girl) ∧ gender(y,girl)∧ name(x,Carol)∧ university(x,cambridge)∧ name(y,Elisa) =>
-#	!university(y, edinburgh)
-    for other_student in other_students:
-        model.AddBoolAnd([
-            student_gender[student]["boy"], student_gender[other_student]["boy"], student_name[other_student]["Oliver"], student_university[other_student]["oxford"], student_name[student]["Lucas"]
-        ]).OnlyEnforceIf(student_university[student]["london"].Not())
-        model.AddBoolAnd([
-            student_gender[student]["boy"], student_gender[other_student]["boy"], student_name[other_student]["Lucas"], student_university[other_student]["london"], student_name[student]["Oliver"]
-        ]).OnlyEnforceIf(student_university[student]["oxford"].Not())
-        model.AddBoolAnd([
-            student_gender[student]["girl"], student_gender[other_student]["girl"], student_name[other_student]["Elisa"], student_university[other_student]["edinburgh"], student_name[student]["Carol"]
-        ]).OnlyEnforceIf(student_university[student]["cambridge"].Not())
-        model.AddBoolAnd([
-            student_gender[student]["girl"], student_gender[other_student]["girl"], student_name[other_student]["Carol"], student_university[other_student]["cambridge"], student_name[student]["Elisa"]
-        ]).OnlyEnforceIf(student_university[student]["edinburgh"].Not())
-#A boy is from Australia, the other studies Architecture.
-#∀x ∀y: x!=y:
-#	gender(x, boy) ∧ gender(y,boy)∧ nationality(x,Australia) =>
-#	subject(y,architecture)
-        model.AddBoolAnd([
-            student_gender[student]["boy"], student_gender[other_student]["boy"], student_nationalities[student]["Australia"]
-        ]).OnlyEnforceIf(student_subject[other_student]["architecture"])
-#A girl goes to Cambridge, the other studies Medicine.
-#∀x ∀y: x!=y:
-#	gender(x, girl) ∧ gender(y,girl)∧ university(x,cambridge) =>
-#	subject(y,medicine)
-        model.AddBoolAnd([
-            student_gender[student]["girl"], student_gender[other_student]["girl"], student_university[student]["cambridge"]
-        ]).OnlyEnforceIf(student_subject[other_student]["medicine"])
-#Oliver studies Law or is from USA. He is not from South Africa.
-#∀x:
-#		name(x,Oliver) => (!subject(x, medicine) ∧  nationality(x, USA)) V (subject(x, medicine) ∧  !nationality(x, USA))
-#		name(x,Oliver) => !nationality(x, South Africa)
-        model.AddBoolXOr([
-            student_nationalities[student]["USA"],
-            student_subject[student]["medicine"]
-        ]).OnlyEnforceIf(student_name[student]["Oliver"])
-        model.AddBoolAnd([
-            student_nationalities[student]["South Africa"].Not()
-        ]).OnlyEnforceIf(student_name[student]["Oliver"])
-#The student from Canada is either a history or will go to Oxford.
-#∀x:
-#		nationality(x,Canada) => (!subject(x, history) ∧  university(x, Oxford)) V (subject(x, history) ∧  !nationality(x, Oxford))
-        model.AddBoolXOr([
-            student_subject[student]["history"],
-            student_university[student]["oxford"]
-        ]).OnlyEnforceIf(student_nationalities[student]["Canada"])
-#The student from South Africa is going to Edinburgh or will study Law.
-#∀x:
-#		nationality(x,South Africa) => (!subject(x, law) ∧  university(x, Edinburgh)) V (subject(x, law) ∧  !nationality(x, Edinburgh))
-        model.AddBoolXOr([
-            student_subject[student]["law"],
-            student_university[student]["edinburgh"]
-        ]).OnlyEnforceIf(student_nationalities[student]["South Africa"])
-    
-    solver = cp_model.CpSolver()    
+        other_students= list(students)
+        other_students.remove(student)
+        model.AddBoolAnd([student_university[other_students[0]]["london"].Not(),
+                          student_university[other_students[1]]["london"].Not(),
+                          student_university[other_students[2]]["london"].Not(),
+                          ]).OnlyEnforceIf(student_university[student]["london"])
+    #Exactly one boy and one girl chose a university in a city with the same initial of their names.
+    #Exactly one boy and one girl chose a university in a city with the same initial of their names.
+    #∀x ∀y: x!=y:
+    #	gender(x, boy) ∧ gender(y,boy)∧ name(x,Oliver)∧ university(x,oxford)∧ name(y,Lucus) =>
+    #	!university(y, London)
+    #	gender(x, boy) ∧ gender(y,boy)∧ name(x,Lucus)∧ university(x,London)∧ name(y,Oliver) =>
+    #	!university(y, oxford)
+    #	gender(x, girl) ∧ gender(y,girl)∧ name(x,Elisa)∧ university(x,edinburgh)∧ name(y,Carol) =>
+    #	!university(y, cambridge)
+    #	gender(x, girl) ∧ gender(y,girl)∧ name(x,Carol)∧ university(x,cambridge)∧ name(y,Elisa) =>
+    #	!university(y, edinburgh)
+        for other_student in other_students:
+            model.AddBoolAnd([student_university[other_student]["london"]
+                              ]).OnlyEnforceIf([student_name[student]["Oliver"],
+                                                student_university[student]["oxford"].Not(),
+                                                student_name[other_student]["Lucas"],
+                                                student_gender[student]['boy'], student_gender[other_student]['boy']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Lucas"], student_university[other_student]["london"].Not()
+                              ]).OnlyEnforceIf([student_name[student]["Oliver"],
+                                                student_university[student]["oxford"],
+                                                student_gender[student]['boy'], student_gender[other_student]['boy']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Oliver"], student_university[other_student]["oxford"]
+                              ]).OnlyEnforceIf([student_name[student]["Lucas"],
+                                                student_university[student]["london"].Not(),
+                                                student_gender[student]['boy'], student_gender[other_student]['boy']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Oliver"], student_university[other_student]["oxford"].Not()
+                              ]).OnlyEnforceIf([student_name[student]["Lucas"],
+                                                student_university[student]["london"],
+                                                student_gender[student]['boy'], student_gender[other_student]['boy']
+                                                ])
+
+            model.AddBoolAnd([student_name[other_student]["Elisa"], student_university[other_student]["edinburgh"]
+                              ]).OnlyEnforceIf([student_name[student]["Carol"],
+                                                student_university[student]["cambridge"].Not(),
+                                                student_gender[student]['girl'], student_gender[other_student]['girl']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Elisa"], student_university[other_student]["edinburgh"].Not()
+                              ]).OnlyEnforceIf([student_name[student]["Carol"],
+                                                student_university[student]["cambridge"],
+                                                student_gender[student]['girl'], student_gender[other_student]['girl']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Carol"], student_university[other_student]["cambridge"]
+                              ]).OnlyEnforceIf([student_name[student]["Elisa"],
+                                                student_university[student]["edinburgh"].Not(),
+                                                student_gender[student]['girl'], student_gender[other_student]['girl']
+                                                ])
+            model.AddBoolAnd([student_name[other_student]["Carol"], student_university[other_student]["cambridge"].Not()
+                              ]).OnlyEnforceIf([student_name[student]["Elisa"],
+                                                student_university[student]["edinburgh"],
+                                                student_gender[student]['girl'], student_gender[other_student]['girl']
+                                                ])
+    #A boy is from Australia, the other studies Architecture.
+    #∀x :
+    #gender(x, boy) = > nationality(x, australia) V subject(y,architecture))
+    # nationality(x, australia)= >  !subject(x,architecture))
+    # subject(x,architecture)) =  >  !nationality(x, australia)
+            model.AddBoolOr([student_nationalities[student]['Australia'], student_subject[student]['architecture']
+                             ]).OnlyEnforceIf(student_gender[student]['boy'])
+            model.AddBoolAnd([student_nationalities[student]['Australia'].Not()
+                             ]).OnlyEnforceIf(student_subject[student]['architecture'])
+            model.AddBoolAnd([student_subject[student]['architecture'].Not()
+                             ]).OnlyEnforceIf(student_nationalities[student]['Australia'])
+
+            # A girl goes to Cambridge, the other studies Medicine.
+            #∀x :
+    #gender(x, girl) = > university(x, cambridge) V subject(y,medicine))
+    # nationality(x, cambridge)= >  !subject(x,medicine))
+    # subject(x,medicine)) =  >  !nationality(x, cambridge)
+            model.AddBoolOr([student_university[student]['cambridge'], student_subject[student]['medicine']
+                             ]).OnlyEnforceIf(student_gender[student]['girl'])
+            model.AddBoolAnd([student_university[student]['cambridge'].Not()
+                             ]).OnlyEnforceIf(student_subject[student]['medicine'])
+            model.AddBoolAnd([student_subject[student]['medicine'].Not()
+                             ]).OnlyEnforceIf(student_university[student]['cambridge'])
+    # Oliver studies Law or is from USA. He is not from South Africa.
+    # ∀x :
+    # name(x, Oliver) = > nationality(x, USA) V subject(x,Law))
+    # nationality(x, USA)= >  !subject(x,Law))
+    # subject(x,Law)) =  >  !nationality(x, USA)
+    # name(x, Oliver) V !nationality(x, South Africa)
+            model.AddBoolOr([student_nationalities[student]['USA'], student_subject[student]['law']
+                             ]).OnlyEnforceIf(student_name[student]['Oliver'])
+            model.AddBoolAnd([student_nationalities[student]['USA'].Not()
+                              ]).OnlyEnforceIf(student_subject[student]['law'])
+            model.AddBoolAnd([student_subject[student]['law'].Not()
+                              ]).OnlyEnforceIf(student_nationalities[student]['USA'])
+            model.AddBoolAnd([student_nationalities[student]['South Africa'].Not()
+                              ]).OnlyEnforceIf(student_name[student]['Oliver'])
+            #The student from Canada is either a historian or will go to Oxford.
+            # ∀x :
+            # nationality(x, Canada) = > subject(x, history) V university(x,Oxford))
+            # nationality(x, Canada)∧ subject(x, history) = >  !university(x,Oxford)
+            # nationality(x, Canada)∧ university(x, Oxford)  =  >  !subject(x, history)
+            model.AddBoolOr([student_subject[student]['history'], student_university[student]["oxford"]
+                             ]).OnlyEnforceIf(student_nationalities[student]["Canada"])
+            model.AddBoolAnd([student_subject[student]['history'].Not()
+                              ]).OnlyEnforceIf([student_nationalities[student]["Canada"],
+                                               student_university[student]["oxford"]
+                                               ])
+            model.AddBoolAnd([student_university[student]['oxford'].Not()
+                              ]).OnlyEnforceIf([student_nationalities[student]["Canada"],
+                                               student_subject[student]["history"]
+                                               ])
+            #The student from South Africa is going to Edinburgh or will study Law.
+            # ∀x :
+            # nationality(x, South Africa) = > subject(x, Law) V university(x,Edinburgh))
+            # nationality(x, South Africa)∧ subject(x, Law) = >  !university(x,Edinburgh)
+            # nationality(x, South Africa)∧ university(x, Edinburgh)  =  >  !subject(x, Law)
+            model.AddBoolOr([student_subject[student]['law'], student_university[student]["edinburgh"]
+                             ]).OnlyEnforceIf(student_nationalities[student]["South Africa"])
+            model.AddBoolAnd([student_subject[student]['law'].Not()
+                              ]).OnlyEnforceIf([student_nationalities[student]["South Africa"],
+                                                student_university[student]["edinburgh"]
+                                                ])
+            model.AddBoolAnd([student_university[student]['edinburgh'].Not()
+                              ]).OnlyEnforceIf([student_nationalities[student]["South Africa"],
+                                                student_subject[student]["law"]
+                                                ])
+    for i in range(4):
+        for j in range(i+1, 4):
+            model.Add(students[i] != students[j])
+    solver = cp_model.CpSolver()
     solver.SearchForAllSolutions(model, SolutionPrinter(student_university, student_nationalities, student_subject, student_gender, student_name))
     
     for student in students:

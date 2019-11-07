@@ -190,7 +190,7 @@ def main():
        
     solver = cp_model.CpSolver()    
     solver.SearchForAllSolutions(model, SolutionPrinter(house_colour, house_nationality, house_pet, house_drink, house_cigarette))
-
+    print(solver.StatusName())
     for house in houses:
         if solver.Value(house_drink[house]["water"]):
             for nationality in nationalities:
