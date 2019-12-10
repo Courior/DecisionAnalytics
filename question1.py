@@ -309,7 +309,7 @@ def main():
                               ]).OnlyEnforceIf([student_nationalities[student]["South Africa"],
                                                 student_subject[student]["law"]
                                                 ])
-    #Symmetry Break        
+    #Symmetry Break
     model.AddBoolAnd([student_name[students[0]]["Carol"]])
     model.AddBoolAnd([student_name[students[1]]["Lucas"]])
     model.AddBoolAnd([student_name[students[2]]["Oliver"]])
