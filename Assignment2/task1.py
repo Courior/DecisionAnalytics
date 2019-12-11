@@ -27,13 +27,12 @@ print(shipping_costs)
 
 # Decision Variables
 # Materials sent from supplier to each factory
-# Products Produced by Each Factory
 # Products sent from Factory to each Customer
 
 # Constraints
 # Suppliers Stock of each Material
 # Production Capacity of each Factory
-# Materials Needed for each Factory to create Products
+# Factories only need materials Required for the products they are creating
 # Products Demanded by each customer
 
 # Cost Function
@@ -57,10 +56,87 @@ print(materials)
 
 solver = pywraplp.Solver('LPWrapper', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
 
-production = {}
+# Materials sent from supplier to each factory
+#supplies_to_factory = {}
+#for supplier in suppliers:
+    #for material in materials:
+        #if not pd.isna(supplier_stock[material][supplier]):
+            #for factory in factories:
+                #supplies_to_factory[(supplier, material, factory)] = solver.NumVar(0, solver.infinity(),
+                                                                       #supplier + "_" + material + "_" + factory)
+#print(supplies_to_factory)
 
+# Products sent from factory to each
+#for factory in factories:
+
+# simplify problem to Products sent from factories to consumers and shipping costs
+
+# products produced by factories and sent to users
+products_sent_from_factories = {}
 for factory in factories:
     for product in products:
-        production[(factory, product)] = solver.NumVar(0, solver.infinity(), factory + "_" + product)
+        if not pd.isna(production_capacity[factory][product]):
+            c = solver.Constraint(0, float(production_capacity[factory][product]))
+        for customer in customers:
+            if not pd.isna(production_capacity[factory][product]):
+                products_sent_from_factories[(factory, product, customer)] = solver.NumVar(0, solver.infinity(),
+                                                                                           factory + "_" + product + "_"
+                                                                                           + customer)
+            else:
+                products_sent_from_factories[(factory, product, customer)] = None
 
-delivery = {}
+for customer in customers:
+    for product in products:
+        if not pd.isna(customer_demand[customer][product]):
+            c = solver.Constraint(float(customer_demand[customer][product]), solver.infinity())
+            for factory in factories:
+                if products_sent_from_factories[(factory, product, customer)] is not None :
+                    c.SetCoefficient(products_sent_from_factories[(factory, product, customer)],
+                                     float(customer_demand[customer][product]))
+
+cost = solver.Objective()
+for customer in customers:
+    for product in products:
+        for factory in factories:
+            if products_sent_from_factories[(factory, product, customer)] is not None :
+                cost.SetCoefficient(products_sent_from_factories[(factory, product, customer)],
+                                    float(shipping_costs[customer][factory]) +
+                                    float(production_cost[factory][product]))
+
+
+# Materials sent from supplier to each factory
+def Materials():
+    materials_sent_to_factories = {}
+
+    for supplier in suppliers:
+        for material in materials:
+            if not pd.isna(supplier_stock[material][supplier]):
+                c = solver.Constraint(0, float(supplier_stock[material][supplier]))
+            for factory in factories:
+                if not pd.isna(supplier_stock[material][supplier]):
+                    materials_sent_to_factories[(supplier, material)][factory] = solver.NumVar(0, solver.infinity(),
+                                                                                               supplier + "_" + material + "_"
+                                                                                               + factory)
+                else:
+                    materials_sent_to_factories[(supplier, material)][factory] = None
+
+
+cost.SetMinimization()
+status = solver.Solve()
+if status == solver.OPTIMAL:
+    print("Optimal Solution")
+    product_cost_per_customer = {}
+    for key, value in products_sent_from_factories.items():
+        factory = key[0]
+        product = key[1]
+        customer = key[2]
+        if value is not None:
+            print(key, value.solution_value(), value.solution_value() *
+                  (
+                          shipping_costs[customer][factory] + production_cost[factory][product])
+                  )
+else:  # No optimal solution was found.
+    if status == solver.FEASIBLE:
+        print('A potentially suboptimal solution was found.')
+    else:
+        print('The solver could not solve the problem.')
