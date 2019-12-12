@@ -174,14 +174,17 @@ def F_factory_material_orders(materials_sent_to_each_factory):
             factories[factory][supplier][material]['amt'] = mnbef_value.solution_value()
             factories[factory][supplier][material]['cost'] = mnbef_value.solution_value()* (raw_material_costs[material][supplier] + raw_material_shipping[factory][supplier])
             factories[factory][supplier]['total'] += factories[factory][supplier][material]['cost']
+
     for factory in sorted(factories.keys()):
         print(factory)
         for supplier in sorted(factories[factory].keys()):
+            print("-",supplier)
             for material in sorted(factories[factory][supplier].keys()):
-                if material != "total":
-                    print(material)
-                    print("--",supplier, material, "amt:",factories[factory][supplier][material]['amt'], "cost", factories[factory][supplier][material]['cost'])
-            print(supplier, "Total Cost:", factories[factory][supplier]['total'])
+                if material != "total" and factories[factory][supplier][material]['amt'] != 0:
+                    print("--", material, "amt:", factories[factory][supplier][material]['amt'], "cost", factories[factory][supplier][material]['cost'])
+            print("Total Cost:", factories[factory][supplier]['total'])
+        print('')
+        print('')
 
 
 
