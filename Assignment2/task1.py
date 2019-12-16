@@ -302,7 +302,89 @@ def H_factory_production_and_cost(materials_sent_to_each_factory, products_sent_
     print('')
     print('')
 
+def I_factory_production_and_cost(materials_sent_to_each_factory, products_sent_from_factories):
+    factory_materials_cost = {}
+    print("I Cost Per Product Unit For Each Customer")
+    for key, mnbef_value in materials_sent_to_each_factory.items():
+        supplier = key[0]
+        material = key[1]
+        factory = key[2]
+        if mnbef_value is not None:
+            if factory not in factory_materials_cost:
+                factory_materials_cost[factory] = {}
+            if material not in factory_materials_cost[factory]:
+                factory_materials_cost[factory][material] = {}
+                factory_materials_cost[factory][material]['amt'] = 0
+                factory_materials_cost[factory][material]['cost'] = 0
+            factory_materials_cost[factory][material]['amt'] += mnbef_value.solution_value()
+            factory_materials_cost[factory][material]['cost'] += mnbef_value.solution_value()* (raw_material_costs[material][supplier] + raw_material_shipping[factory][supplier])
 
+    factory_production_amt_cost = {}
+    for psff_key, psff_value in products_sent_from_factories.items():
+        factory = psff_key[0]
+        product = psff_key[1]
+        customer = psff_key[2]
+        if psff_value is not None:
+            if factory not in factory_production_amt_cost:
+                factory_production_amt_cost[factory] = {}
+            if product not in factory_production_amt_cost[factory]:
+                factory_production_amt_cost[factory][product] = {}
+                factory_production_amt_cost[factory][product]['amt'] = 0
+                factory_production_amt_cost[factory][product]['production cost'] = 0
+            factory_production_amt_cost[factory][product]['amt'] += psff_value.solution_value()
+            factory_production_amt_cost[factory][product]['production cost'] += psff_value.solution_value() * (production_cost[factory][product])
+
+    factory_cost_per_product_unit ={}
+    for factory in sorted(factory_production_amt_cost.keys()):
+        if factory not in factory_cost_per_product_unit:
+            factory_cost_per_product_unit[factory] = {}
+        for product in sorted(factory_production_amt_cost[factory].keys()):
+            if product not in factory_cost_per_product_unit[factory]:
+                factory_cost_per_product_unit[factory][product] = factory_production_amt_cost[factory][product]['production cost'] / factory_production_amt_cost[factory][product]['amt']
+            for material in materials:
+                if not pd.isna(product_requirements[material][product]):
+                    material_per_unit_cost = factory_materials_cost[factory][material]['cost'] / factory_materials_cost[factory][material]['amt']
+                    amount_of_materials = product_requirements[material][product] * factory_production_amt_cost[factory][product]['amt']
+                    cost_of_materials_used = amount_of_materials * material_per_unit_cost
+                    cost_of_materials_used_per_product = cost_of_materials_used * factory_production_amt_cost[factory][product]['amt']
+                    factory_cost_per_product_unit[factory][product] += cost_of_materials_used_per_product
+    customer_order_per_factory = {}
+    for psff_key, psff_value in products_sent_from_factories.items():
+        factory = psff_key[0]
+        product = psff_key[1]
+        customer = psff_key[2]
+        if psff_value is not None and psff_value.solution_value() != 0:
+            if customer not in customer_order_per_factory:
+                customer_order_per_factory[customer] = {}
+            if product not in customer_order_per_factory[customer]:
+                customer_order_per_factory[customer][product] = {}
+            if factory not in customer_order_per_factory[customer][product]:
+                customer_order_per_factory[customer][product][factory] = {}
+            customer_order_per_factory[customer][product][factory]['amt'] = psff_value.solution_value()
+            shipping_cost = shipping_costs[customer][factory] * customer_order_per_factory[customer][product][factory]['amt']
+            cost_of_goods = factory_cost_per_product_unit[factory][product] * customer_order_per_factory[customer][product][factory]['amt']
+            customer_order_per_factory[customer][product][factory]['cost'] = cost_of_goods + shipping_cost
+    customer_total_order_cost_per_product ={}
+    for customer in customer_order_per_factory.keys():
+        if customer not in customer_total_order_cost_per_product:
+            customer_total_order_cost_per_product[customer] = {}
+        for product in customer_order_per_factory[customer].keys():
+            if product not in customer_total_order_cost_per_product[customer]:
+                customer_total_order_cost_per_product[customer][product] = {}
+                customer_total_order_cost_per_product[customer][product]['amt'] = 0
+                customer_total_order_cost_per_product[customer][product]['cost'] = 0
+            for factory in customer_order_per_factory[customer][product].keys():
+                customer_total_order_cost_per_product[customer][product]['amt'] +=  customer_order_per_factory[customer][product][factory]['amt']
+                customer_total_order_cost_per_product[customer][product]['cost'] += \
+                customer_order_per_factory[customer][product][factory]['cost']
+
+    for customer in sorted(customer_total_order_cost_per_product.keys()):
+        print(customer)
+        for product in sorted(customer_total_order_cost_per_product[customer].keys()):
+            print("--", product, "cost per unit:", customer_total_order_cost_per_product[customer][product]['cost']/customer_total_order_cost_per_product[customer][product]['amt'])
+    print('')
+    print('')
+    print('')
 
 
 
@@ -312,6 +394,7 @@ if status == solver.OPTIMAL:
     F_factory_material_orders(materials_sent_to_each_factory)
     G_factory_production_and_cost(materials_sent_to_each_factory,products_sent_from_factories)
     H_factory_production_and_cost(materials_sent_to_each_factory, products_sent_from_factories)
+    I_factory_production_and_cost(materials_sent_to_each_factory, products_sent_from_factories)
 else:  # No optimal solution was found.
     if status == solver.FEASIBLE:
         print('A potentially suboptimal solution was found.')
