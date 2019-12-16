@@ -145,7 +145,8 @@ cost.SetMinimization()
 
 
 status = solver.Solve()
-
+# F. Answer the question how much of each product each factory should order from each supplier [1 point] and how much
+# this order will cost including shipping [1 point].
 def F_factory_material_orders(materials_sent_to_each_factory):
     factories = {}
     print("F Material Orders")
