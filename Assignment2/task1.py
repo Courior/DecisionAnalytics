@@ -27,14 +27,22 @@ print(shipping_costs)
 
 # Decision Variables
 # Materials sent from supplier to each factory
+# materials_sent_to_each_factory(supplier,material,factory) ∈ Z
 # Products sent from Factory to each Customer
+# products_sent_from_factories(factory,product,customer) ∈ Z
 
 # Constraints
 # Suppliers Stock of each Material
+# ∀x ∀y
+# sum(materials_sent_to_each_factory(x,y,1-n)) <= Supplier_Stock(x,y)
 # Production Capacity of each Factory
+# ∀x ∀y
+# sum(products_sent_from_factories(x,y,1-n)) <= production_capacity(x,y)
 # Factories only need materials Required for the products they are creating
+# ∀factory
+# sum(materials_sent_to_each_factory(factory)) - sum(products_sent_from_factories(factory,product)Tproduct_requirement(product)) = 0
 # Products Demanded by each customer
-
+# sum(products_sent_from_factories(customer)) = customer_demand(customer)
 # Cost Function
 # Raw Material Cost of materials from each supplier
 # Raw Material shipping cost to each Factory
@@ -54,7 +62,7 @@ print(materials)
 
 ## Simple Version with only production cost per factory and consumer need
 
-solver = pywraplp.Solver('LPWrapper', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
+solver = pywraplp.Solver('LPWrapper', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
 # Materials sent from supplier to each factory
 
@@ -70,7 +78,7 @@ for factory in factories:
             c = solver.Constraint(0, float(production_capacity[factory][product]))
         for customer in customers:
             if not pd.isna(production_capacity[factory][product]):
-                products_sent_from_factories[(factory, product, customer)] = solver.NumVar(0, solver.infinity(),
+                products_sent_from_factories[(factory, product, customer)] = solver.IntVar(0, solver.infinity(),
                                                                                            factory + "_" + product + "_"
                                                                                            + customer)
                 # Production Capacity per factory coefficient
@@ -107,7 +115,7 @@ for supplier in suppliers:
             c = solver.Constraint(0, float(supplier_stock[material][supplier]))
         for factory in factories:
             if not pd.isna(supplier_stock[material][supplier]):
-                materials_sent_to_each_factory[(supplier, material, factory)] = solver.NumVar(0, solver.infinity(),
+                materials_sent_to_each_factory[(supplier, material, factory)] = solver.IntVar(0, solver.infinity(),
                                                                                               supplier + "_" + material + "_"
                                                                                               + factory)
                 # Supplier stock Coefficient
